@@ -1,192 +1,112 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>TRIZON ERP - SISTEMA DE GESTÃO</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+<meta charset="UTF-8">
+<title>LA CLIMATIZAÇÃO E ELÉTRICA</title>
+<link rel="stylesheet" href="style.css">
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
-<body class="win98-bg">
+<body>
 
-<div id="login-screen" class="full-overlay">
-    <div class="window" style="width: 320px">
-        <div class="title-bar"><span>🔐 Login - Trizon Imports</span></div>
-        <div class="window-body">
-            <p>Usuário:</p> <input type="text" id="log-user" autofocus>
-            <p>Senha:</p> <input type="password" id="log-pass">
-            <hr>
-            <button class="win-btn full" onclick="auth.login()">ACESSAR SISTEMA</button>
-        </div>
-    </div>
+<header>
+  <h1>LA CLIMATIZAÇÃO E ELÉTRICA</h1>
+  <p>Sistema de Controle</p>
+</header>
+
+<div class="dashboard">
+
+<div class="card">
+<h2>Lançar Pedido</h2>
+
+<input type="text" id="cliente" placeholder="Cliente">
+<input type="text" id="servico" placeholder="Serviço">
+<input type="number" id="valorPedido" placeholder="Valor">
+
+<select id="responsavel">
+<option>Antônio</option>
+<option>Lucas</option>
+</select>
+
+<select id="status">
+<option>Pendente</option>
+<option>Pago</option>
+</select>
+
+<input type="date" id="dataPedido">
+
+<button onclick="addPedido()" id="btnPedido">Adicionar Pedido</button>
+
+<ul id="listaPedidos"></ul>
 </div>
 
-<div id="main-app" class="app-layout" style="display: none;">
-    <aside class="sidebar">
-        <div class="window" style="height: 100%">
-            <div class="title-bar"><span>Menu</span></div>
-            <div class="window-body">
-                <div class="admin-view"><button class="win-btn full" onclick="app.nav('dash')">📊 Dashboard</button></div>
-                <button class="win-btn full" onclick="app.nav('pedido')">🛒 Lançar Pedido</button>
-                <button class="win-btn full" onclick="app.nav('despacho')">📦 Ordem de Despacho</button>
-                <button class="win-btn full" onclick="app.nav('estoque')">📋 Estoque Geral</button>
-                <div class="admin-view">
-                    <button class="win-btn full" onclick="app.nav('faturamento')">💰 Faturamento</button>
-                    <button class="win-btn full" onclick="app.nav('usuarios')">👥 Usuários</button>
-                </div>
-                <hr>
-                <button class="win-btn full" onclick="location.reload()" style="color:red">SAIR</button>
-            </div>
-        </div>
-    </aside>
+<div class="card">
+<h2>Gastos</h2>
 
-    <main class="viewport">
-        <section id="sec-estoque" class="view">
-            <div class="window">
-                <div class="title-bar"><span>Controle de Estoque</span></div>
-                <div class="window-body">
-                    <div style="display:flex; gap:5px; margin-bottom:10px">
-                        <input type="text" id="e-filter" placeholder="🔍 Filtrar..." oninput="estoque.filter(this.value)">
-                        <div class="admin-view"><button class="win-btn" onclick="estoque.openModal()">+ NOVO PRODUTO</button></div>
-                    </div>
-                    <table class="win-table">
-                        <thead>
-                            <tr>
-                                <th>Cód</th>
-                                <th>Produto</th>
-                                <th>Custo</th>
-                                <th>Varejo</th>
-                                <th>Atacado</th>
-                                <th>Qtd</th>
-                                <th class="admin-view">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="list-estoque"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
+<input type="text" id="descGasto" placeholder="Descrição">
+<input type="number" id="valorGasto" placeholder="Valor">
 
-        <section id="sec-dash" class="view">
-            <div class="window">
-                <div class="title-bar"><span>Painel Administrativo</span></div>
-                <div class="window-body">
-                    <div class="stat-row">
-                        <div class="stat-box">Hoje: <b id="d-fat">R$ 0,00</b></div>
-                        <div class="stat-box">Pendente: <b id="d-pend">R$ 0,00</b></div>
-                    </div>
-                    <div style="margin: 10px 0;">
-                        <input type="text" id="dash-search" placeholder="🔍 Buscar por Nº, Cliente ou Data..." oninput="dash.render()">
-                    </div>
-                    <table class="win-table">
-                        <thead><tr><th>Nº</th><th>Cliente</th><th>Data</th><th>Total</th><th>Status</th><th>X</th></tr></thead>
-                        <tbody id="list-dash"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
+<select id="quemPagou">
+<option>Antônio</option>
+<option>Lucas</option>
+</select>
 
-        <section id="sec-pedido" class="view">
-            <div class="window">
-                <div class="title-bar"><span>Novo Pedido</span></div>
-                <div class="window-body">
-                    <input type="text" id="p-cliente" placeholder="Nome do Cliente">
-                    <div style="position: relative;">
-                        <input type="text" id="p-busca" placeholder="🔍 NOME ou CÓDIGO..." oninput="pedidos.search(this.value)">
-                        <div id="res-busca" class="dropdown"></div>
-                    </div>
-                    <table class="win-table">
-                        <thead><tr><th>Produto</th><th>Qtd</th><th>R$ Unit</th><th>Subtotal</th><th>X</th></tr></thead>
-                        <tbody id="list-carrinho"></tbody>
-                    </table>
-                    <div class="calc-footer">
-                        <span>Desc %: <input type="number" id="p-desc" value="0" style="width:60px" oninput="pedidos.calc()"></span>
-                        <h2 id="p-total">Total: R$ 0,00</h2>
-                        <button class="win-btn" onclick="pedidos.save()" style="background:green; color:white">ENVIAR PEDIDO</button>
-                    </div>
-                </div>
-            </div>
-        </section>
+<input type="date" id="dataGasto">
 
-        <section id="sec-despacho" class="view">
-            <div class="window">
-                <div class="title-bar"><span>📦 Ordem de Despacho Independente</span></div>
-                <div class="window-body">
-                    <input type="text" id="desp-cliente" placeholder="Nome do Cliente para Despacho">
-                    <input type="text" id="d-busca" placeholder="🔍 Adicionar por NOME ou CÓDIGO..." oninput="despacho.search(this.value)">
-                    <div id="res-busca-despacho" class="dropdown"></div>
-                    <table class="win-table">
-                        <thead><tr><th>Produto</th><th>Qtd</th><th>Unitário</th><th>Total</th><th>X</th></tr></thead>
-                        <tbody id="list-despacho-manual"></tbody>
-                    </table>
-                    <div class="calc-footer">
-                        <span>Desc %: <input type="number" id="desp-desc" value="0" style="width:60px" oninput="despacho.render()"></span>
-                        <h2 id="d-total-manual">Total: R$ 0,00</h2>
-                        <button class="win-btn" onclick="despacho.gerarPDF()">GERAR PDF DESPACHO</button>
-                        <button class="win-btn" onclick="despacho.limpar()">LIMPAR</button>
-                    </div>
-                </div>
-            </div>
-        </section>
+<button onclick="addGasto()">Adicionar Gasto</button>
 
-        <section id="sec-faturamento" class="view">
-            <div class="window">
-                <div class="title-bar"><span>Faturar Pedidos</span></div>
-                <div class="window-body" id="faturamento-list"></div>
-            </div>
-        </section>
-
-        <section id="sec-usuarios" class="view">
-            <div class="window">
-                <div class="title-bar"><span>Gerenciar Acessos</span></div>
-                <div class="window-body">
-                    <input type="text" id="u-nome" placeholder="Login">
-                    <input type="text" id="u-pass" placeholder="Senha">
-                    <select id="u-role"><option value="func">Vendedor</option><option value="admin">Admin</option></select>
-                    <button class="win-btn" onclick="usuarios.save()">OK</button>
-                    <table class="win-table">
-                        <thead><tr><th>Login</th><th>Senha</th><th>Cargo</th><th>X</th></tr></thead>
-                        <tbody id="list-users"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-    </main>
+<ul id="listaGastos"></ul>
 </div>
 
-<div id="modal-detalhe-pedido" class="modal-overlay">
-    <div class="window" style="width: 500px">
-        <div class="title-bar"><span>📄 Detalhes do Pedido</span></div>
-        <div class="window-body">
-            <div id="detalhe-conteudo"></div>
-            <hr>
-            <button class="win-btn" onclick="dash.imprimirNF()">IMPRIMIR NOTA FISCAL</button>
-            <button class="win-btn" onclick="dash.closeModal()">FECHAR</button>
-        </div>
-    </div>
 </div>
 
-<div id="modal-prod" class="modal-overlay">
-    <div class="window" style="width: 350px">
-        <div class="title-bar"><span>Dados do Produto</span></div>
-        <div class="window-body">
-            <input type="hidden" id="e-id-db">
-            <label>Código:</label> <input type="text" id="e-codigo">
-            <label>Nome:</label> <input type="text" id="e-nome">
-            <label>Custo:</label> <input type="number" id="e-custo">
-            <label>Varejo:</label> <input type="number" id="e-varejo">
-            <label>Atacado:</label> <input type="number" id="e-atacado">
-            <label>Qtd em Estoque:</label> <input type="number" id="e-qtd">
-            <hr>
-            <button class="win-btn" onclick="estoque.save()">SALVAR PRODUTO</button>
-            <button class="win-btn" onclick="estoque.closeModal()">CANCELAR</button>
-        </div>
-    </div>
+<!-- RESUMO -->
+<div class="resumo">
+<h2>Resumo Financeiro</h2>
+
+<div class="resumo-grid">
+  <div class="box green">
+    <p>Faturamento</p>
+    <h3>R$ <span id="fat">0.00</span></h3>
+  </div>
+
+  <div class="box red">
+    <p>Gastos</p>
+    <h3>R$ <span id="gasto">0.00</span></h3>
+  </div>
+
+  <div class="box blue">
+    <p>Líquido</p>
+    <h3>R$ <span id="liq">0.00</span></h3>
+  </div>
 </div>
 
-<div class="taskbar">
-    <div class="start-btn"><b>Start</b></div>
-    <div id="clock" class="clock">00:00</div>
+<h3 style="margin-top:20px;">Divisão</h3>
+
+<div class="resumo-grid">
+  <div class="box">
+    <p>Antônio</p>
+    <h3>R$ <span id="antonio">0.00</span></h3>
+  </div>
+
+  <div class="box">
+    <p>Lucas</p>
+    <h3>R$ <span id="lucas">0.00</span></h3>
+  </div>
+</div>
+</div>
+
+<!-- PESQUISA -->
+<div class="card" style="margin:20px;">
+<h2>Pesquisar Serviços Pagos</h2>
+
+<input type="text" id="buscaCliente" placeholder="Nome do cliente">
+<input type="date" id="buscaData">
+
+<button onclick="pesquisar()">Pesquisar</button>
+
+<ul id="resultadoBusca"></ul>
 </div>
 
 <script src="script.js"></script>
